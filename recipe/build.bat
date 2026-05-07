@@ -49,7 +49,13 @@ if not exist "%LIBRARY_PREFIX%\share\nethack" mkdir "%LIBRARY_PREFIX%\share\neth
 if not exist "%LIBRARY_BIN%" mkdir "%LIBRARY_BIN%"
 
 copy /Y binary\NetHack.exe "%LIBRARY_BIN%\nethack.exe" || exit /b 1
-for %%F in (nhdat370 nhdat sysconf license symbols Guidebook.txt opthelp) do (
-    if exist "binary\%%F" copy /Y "binary\%%F" "%LIBRARY_PREFIX%\share\nethack\" >nul
-)
-if exist binary\recover.exe copy /Y binary\recover.exe "%LIBRARY_PREFIX%\share\nethack\" >nul
+
+REM Copy the data files NetHack expects at runtime: the dat archive
+REM (named nhdat500 in NetHack 5.0), license, sysconf.template,
+REM symbols, docs, and config templates.
+xcopy /Y /E /I binary "%LIBRARY_PREFIX%\share\nethack\" || exit /b 1
+
+REM Drop the GUI build and debug symbols that we don't ship.
+del /Q "%LIBRARY_PREFIX%\share\nethack\NetHackW.exe" 2>nul
+del /Q "%LIBRARY_PREFIX%\share\nethack\NetHack.PDB" 2>nul
+del /Q "%LIBRARY_PREFIX%\share\nethack\NetHackW.PDB" 2>nul

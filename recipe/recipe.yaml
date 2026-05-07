@@ -55,8 +55,8 @@ tests:
       - if: win
         then:
           - if not exist %LIBRARY_BIN%\nethack.exe exit 1
-          - if not exist %LIBRARY_PREFIX%\share\nethack\nhdat exit 1
-          - if not exist %LIBRARY_PREFIX%\share\nethack\sysconf exit 1
+          - if not exist %LIBRARY_PREFIX%\share\nethack\nhdat500 exit 1
+          - if not exist %LIBRARY_PREFIX%\share\nethack\sysconf.template exit 1
           - if not exist %LIBRARY_PREFIX%\share\nethack\license exit 1
           - nethack.exe --version
 
