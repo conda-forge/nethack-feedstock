@@ -58,7 +58,10 @@ tests:
           - if not exist %LIBRARY_PREFIX%\share\nethack\nhdat500 exit 1
           - if not exist %LIBRARY_PREFIX%\share\nethack\sysconf.template exit 1
           - if not exist %LIBRARY_PREFIX%\share\nethack\license exit 1
-          - nethack.exe --version
+          # Skip `nethack.exe --version`: NetHack's Windows startup
+          # calls SHGetKnownFolderPath(FOLDERID_Profile) before the
+          # early-args path that handles --version, and that call
+          # errors out under the Azure pipelines service account.
 
 about:
   homepage: https://www.nethack.org/
