@@ -78,18 +78,26 @@ if errorlevel 1 exit /b 1
 REM Move artifacts into the conda layout. The `binary` target writes
 REM into ..\binary (top-level binary/). We only ship NetHack.exe (TTY
 REM console build); NetHackW.exe is intentionally dropped.
+REM
+REM On Windows NetHack derives DATAPREFIX from GetModuleFileName(), i.e.
+REM the directory of the running .exe (sys/windows/windsys.c
+REM set_default_prefix_locations). At startup it reads sysconf.template,
+REM symbols, guidebook, nhdat500, etc. from that directory, so the .exe
+REM and its data files have to live together. We install both into
+REM share\nethack\ and drop a .bat shim in Library\bin\ so `nethack`
+REM stays on PATH.
 cd %SRC_DIR%
 if not exist "%LIBRARY_PREFIX%\share\nethack" mkdir "%LIBRARY_PREFIX%\share\nethack"
 if not exist "%LIBRARY_BIN%" mkdir "%LIBRARY_BIN%"
 
-copy /Y binary\NetHack.exe "%LIBRARY_BIN%\nethack.exe" || exit /b 1
-
-REM Copy the data files NetHack expects at runtime: the dat archive
-REM (named nhdat500 in NetHack 5.0), license, sysconf.template,
-REM symbols, docs, and config templates.
 xcopy /Y /E /I binary "%LIBRARY_PREFIX%\share\nethack\" || exit /b 1
 
 REM Drop the GUI build and debug symbols that we don't ship.
 del /Q "%LIBRARY_PREFIX%\share\nethack\NetHackW.exe" 2>nul
 del /Q "%LIBRARY_PREFIX%\share\nethack\NetHack.PDB" 2>nul
 del /Q "%LIBRARY_PREFIX%\share\nethack\NetHackW.PDB" 2>nul
+
+REM PATH shim. %~dp0 expands to the .bat's directory (Library\bin\),
+REM so this resolves to Library\share\nethack\NetHack.exe at runtime.
+> "%LIBRARY_BIN%\nethack.bat" echo @echo off
+>> "%LIBRARY_BIN%\nethack.bat" echo "%%~dp0..\share\nethack\NetHack.exe" %%*
