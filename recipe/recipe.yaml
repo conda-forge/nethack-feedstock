@@ -15,7 +15,7 @@ source:
       - patches/0003-hints-silence-git-probes.patch
 
 build:
-  number: 2
+  number: 3
   skip:
     - win
   script:
