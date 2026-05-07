@@ -22,7 +22,7 @@ source:
       target_directory: lib/pdcursesmod
 
 build:
-  number: 4
+  number: 5
   script:
     env:
       LUA_VERSION: ${{ lua_version }}
