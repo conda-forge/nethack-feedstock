@@ -22,7 +22,7 @@ source:
       target_directory: lib/pdcursesmod
 
 build:
-  number: 5
+  number: 6
   script:
     env:
       LUA_VERSION: ${{ lua_version }}
@@ -54,7 +54,8 @@ tests:
           - nethack --version
       - if: win
         then:
-          - if not exist %LIBRARY_BIN%\nethack.exe exit 1
+          - if not exist %LIBRARY_BIN%\nethack.bat exit 1
+          - if not exist %LIBRARY_PREFIX%\share\nethack\NetHack.exe exit 1
           - if not exist %LIBRARY_PREFIX%\share\nethack\nhdat500 exit 1
           - if not exist %LIBRARY_PREFIX%\share\nethack\sysconf.template exit 1
           - if not exist %LIBRARY_PREFIX%\share\nethack\license exit 1
