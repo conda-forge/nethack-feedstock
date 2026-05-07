@@ -1,17 +1,18 @@
-Two adjustments for the conda-forge Windows build:
+Three adjustments for the conda-forge Windows build:
 
 1. Fix the EXIST check for pre-placed PDCursesMod sources. The original
    line concatenated $(R_PDCDIST) with "curses.h" with no separator,
-   producing ..\lib\pdcursesmodcurses.h, which never matches. We
-   extract pdcursesmod into lib\pdcursesmod\ and need the lookup to
-   find lib\pdcursesmod\curses.h.
+   producing ..\lib\pdcursesmodcurses.h, which never matches.
 
 2. Allow LUALIB to be overridden from the nmake command line via
-   !IFNDEF guard. The default expression points to a static lib that
-   the makefile would build from bundled lua source; we override
-   LUALIB to conda-forge's $(LIBRARY_LIB)\lua.lib so nethack links
-   against the conda-forge lua DLL at runtime, mirroring the Linux
-   build's `-llua` redirect.
+   !IFNDEF guard, so we can point at conda-forge's $(LIBRARY_LIB)\lua.lib.
+
+3. Wrap each host-utility .exe rule (makedefs, uudecode, dlb, tilemap,
+   tile2bmp) with !IFNDEF PRECOMPILED_HOST_UTILS so that, on a
+   cross-compile pass, these rules are excluded entirely. We then
+   pre-build them in a host-arch nmake pass and restore the .exe
+   files before the target-arch pass, where make sees the existing
+   files and treats them as up to date.
 
 --- a/sys/windows/Makefile.nmake
 +++ b/sys/windows/Makefile.nmake
@@ -39,3 +40,73 @@ Two adjustments for the conda-forge Windows build:
  LUADLL   = $(LIBDIR)lua$(LUAVER)-$(TARGET_CPU).dll
  R_LUAINCL  = /I$(R_LUASRC)
  LUATARGETS = lua.exe $(LUADLL) $(LUALIB)
+@@ -1811,9 +1813,11 @@
+ $(OUTL)nhsizes3.o: $(CONFIG_H) nhsizes3.c
+ 	$(Q)$(CC) $(CFLAGS) $(CROSSCOMPILE) -Fo$@ nhsizes3.c
+ 
++!IFNDEF PRECOMPILED_HOST_UTILS
+ $(U)makedefs.exe: $(OUTLHACKLIB) $(MAKEDEFSOBJS)
+ 	@echo Linking $(@:\=/)
+ 	@$(link) $(LFLAGS) /PDB:"$(OUTL)$(@B).PDB" /MAP:"$(OUTL)$(@B).MAP" -out:$@ $(MAKEDEFSOBJS) $(OUTLHACKLIB)
++!ENDIF
+ 
+ $(OUTL)makedefs.o: $(U)makedefs.c $(SRC)mdlib.c $(CONFIG_H) $(INCL)permonst.h \
+ 		$(INCL)objclass.h $(INCL)sym.h $(INCL)defsym.h \
+@@ -1920,10 +1924,12 @@
+ # uudecode utility and uuencoded targets
+ #==========================================
+ 
++!IFNDEF PRECOMPILED_HOST_UTILS
+ $(U)uudecode.exe: $(OUTL)uudecode.o
+ 	@echo Linking $(@:\=/)
+ 	@$(link) $(LFLAGS) /PDB:"$(OUTL)$(@B).PDB" /MAP:"$(OUTL)$(@B).MAP" \
+ 		-out:$@ $(OUTL)uudecode.o
++!ENDIF
+ 
+ $(OUTL)uudecode.o: $(SSYS)uudecode.c
+ 	$(Q)$(CC) $(CFLAGS) -wd4702 $(TTYDEF) $(CROSSCOMPILE) \
+@@ -2119,6 +2125,7 @@
+ # DLB utility and nhdatNNN file creation
+ #==========================================
+ 
++!IFNDEF PRECOMPILED_HOST_UTILS
+ $(U)dlb.exe: $(DLBOBJ_HOST) $(OUTL)dlb$(HOST).o $(OUTLHACKLIB)
+ 	@echo Linking $(@:\=/)
+ 	@$(link) $(LFLAGS) /PDB:"$(OUTL)$(@B).PDB" /MAP:"$(OUTL)$(@B).MAP" $(OUTLHACKLIB) -out:$@ @<<$(@B).lnk
+@@ -2127,6 +2134,7 @@
+ 		$(OUTL)alloc$(HOST).o
+ 		$(OUTL)panic$(HOST).o
+ <<
++!ENDIF
+ 
+ !IFDEF TEST_CROSSCOMPILE
+ $(OUTL)dlb$(HOST).o: $(OUTL)dlb_main$(HOST).o $(OUTL)alloc$(HOST).o $(OUTL)panic$(HOST).o $(INCL)dlb.h
+@@ -2207,10 +2215,12 @@
+ 	@$(U)tilemap
+ 	@echo A new $(@:\=/) has been created
+ 
++!IFNDEF PRECOMPILED_HOST_UTILS
+ $(U)tilemap.exe: $(OUTL)tilemap.o $(OUTL)monst.o $(OUTL)objects.o $(OUTL)drawing.o $(OUTLHACKLIB)
+ 	@echo Linking $(@:\=/)
+ 	@$(link) $(LFLAGS) /PDB:"$(OUTL)$(@B).PDB" /MAP:"$(OUTL)$(@B).MAP" $(HACKLIB) -out:$@ \
+ 		$(OUTL)tilemap.o $(OUTL)monst.o $(OUTL)objects.o $(OUTL)drawing.o $(OUTLHACKLIB)
++!ENDIF
+ 
+ $(OUTL)tilemap.o: $(WSHR)tilemap.c $(HACK_H)
+ 	$(Q)$(CC) $(CFLAGS) $(CROSSCOMPILE) -Fo$@ $(WSHR)tilemap.c
+@@ -2271,6 +2281,7 @@
+ 	@echo Creating 16x16 binary tile files (this may take some time)
+ 	@$(U)tile2bmp $@
+ 
++!IFNDEF PRECOMPILED_HOST_UTILS
+ $(U)tile2bmp.exe: $(OUTL)tile2bmp.o $(TEXT_IO) $(OUTL)alloc.o $(OUTL)panic.o
+ 	@echo Linking $(@:\=/)
+ 	@$(link) $(LFLAGS) /PDB:"$(OUTL)$(@B).PDB" /MAP:"$(OUTL)$(@B).MAP" $(OUTLHACKLIB) -out:$@ @<<$(@B).lnk
+@@ -2280,6 +2291,7 @@
+ 		$(OUTL)alloc.o
+ 		$(OUTL)panic.o
+ <<
++!ENDIF
+ 
+ $(U)til2bm32.exe: $(OUTL)til2bm32.o $(TEXT_IO32)
+ 	@echo Linking $(@:\=/)
