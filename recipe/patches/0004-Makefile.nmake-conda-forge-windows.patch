@@ -1,0 +1,41 @@
+Two adjustments for the conda-forge Windows build:
+
+1. Fix the EXIST check for pre-placed PDCursesMod sources. The original
+   line concatenated $(R_PDCDIST) with "curses.h" with no separator,
+   producing ..\lib\pdcursesmodcurses.h, which never matches. We
+   extract pdcursesmod into lib\pdcursesmod\ and need the lookup to
+   find lib\pdcursesmod\curses.h.
+
+2. Allow LUALIB to be overridden from the nmake command line via
+   !IFNDEF guard. The default expression points to a static lib that
+   the makefile would build from bundled lua source; we override
+   LUALIB to conda-forge's $(LIBRARY_LIB)\lua.lib so nethack links
+   against the conda-forge lua DLL at runtime, mirroring the Linux
+   build's `-llua` redirect.
+
+--- a/sys/windows/Makefile.nmake
++++ b/sys/windows/Makefile.nmake
+@@ -354,11 +354,11 @@
+ # the expected locations already, with precedence given to ../submodules,
+ # then ../lib.
+ #! MESSAGE debug spot3
+-!  IF EXIST("$(LIBDIR)$(R_PDCDIST)curses.h")
++!  IF EXIST("$(LIBDIR)$(R_PDCDIST)\curses.h")
+ R_PDCURSES_TOP=$(LIBDIR)$(PDCDIST)
+ PDCURSES_TOP=$(R_PDCURSES_TOP)$(BACKSLASH)
+ ADD_CURSES=Y
+-!  ELSEIF EXIST("$(SUBM)$(R_PDCDIST)curses.h")
++!  ELSEIF EXIST("$(SUBM)$(R_PDCDIST)\curses.h")
+ #!MESSAGE debug spot4
+ R_PDCURSES_TOP=$(LIBDIR)$(PDCDIST)
+ PDCURSES_TOP=$(R_PDCURSES_TOP)$(BACKSLASH)
+@@ -556,7 +556,9 @@
+ LUAVER=5.4.8
+ !ENDIF
+ 
++!IFNDEF LUALIB
+ LUALIB   = $(LIBDIR)lua$(LUAVER)-$(TARGET_CPU)-static.lib
++!ENDIF
+ LUADLL   = $(LIBDIR)lua$(LUAVER)-$(TARGET_CPU).dll
+ R_LUAINCL  = /I$(R_LUASRC)
+ LUATARGETS = lua.exe $(LUADLL) $(LUALIB)
