@@ -1,0 +1,38 @@
+Source comes from a release tarball with no .git directory, so the
+git rev-parse / git config probes spew dozens of "fatal: not a git
+repository" lines and (worse) capture that error string into
+NETHACK_GIT_SHA / NETHACK_GIT_BRANCH / NETHACK_GIT_PREFIX defines.
+Stub the values empty so the surrounding `ifdef` blocks skip cleanly.
+
+--- a/sys/unix/hints/macOS.500
++++ b/sys/unix/hints/macOS.500
+@@ -318,9 +318,10 @@ WINOBJ = $(WINOBJ0) $(sort $(XTRAOBJ))
+ # prevent duplicates in VARDATND if both X11 and Qt are being supported
+ VARDATND += $(sort $(VARDATND0))
+
+-GIT_HASH := $(shell echo `git rev-parse --verify HEAD` 2>&1)
+-GIT_BRANCH := $(shell echo `git rev-parse --abbrev-ref HEAD` 2>&1)
+-GIT_PREFIX := $(shell echo `git config nethack.substprefix` 2>&1)
++# Disabled: source extracted from tarball, no .git available.
++GIT_HASH :=
++GIT_BRANCH :=
++GIT_PREFIX :=
+
+ ifdef GIT_HASH
+ GITHASH = -DNETHACK_GIT_SHA=\"$(GIT_HASH)\"
+--- a/sys/unix/hints/linux.500
++++ b/sys/unix/hints/linux.500
+@@ -366,9 +366,10 @@ WINOBJ = $(WINOBJ0) $(sort $(XTRAOBJ))
+ # prevent duplicates in VARDATND if both X11 and Qt are being supported
+ VARDATND += $(sort $(VARDATND0))
+
+-GIT_HASH := $(shell echo `git rev-parse --verify HEAD` 2>&1)
+-GIT_BRANCH := $(shell echo `git rev-parse --abbrev-ref HEAD` 2>&1)
+-GIT_PREFIX := $(shell echo `git config nethack.substprefix` 2>&1)
++# Disabled: source extracted from tarball, no .git available.
++GIT_HASH :=
++GIT_BRANCH :=
++GIT_PREFIX :=
+
+ ifdef GIT_HASH
+ GITHASH = -DNETHACK_GIT_SHA=\"$(GIT_HASH)\"

@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-LUA_VERSION=5.4.8
-
 # Pick a hints file appropriate for the host platform. The linux.500 hints
 # probe libuuid via /sbin/ldconfig (Linux-only) and assume GNU userland;
 # macOS.500 sets macOS-specific defines and avoids that probe.
