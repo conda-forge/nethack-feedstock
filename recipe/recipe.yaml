@@ -12,11 +12,15 @@ source:
     patches:
       - patches/0001-compiler.500-respect-env-CFLAGS.patch
       - patches/0002-Makefile.src-link-against-conda-lua.patch
+      - patches/0003-hints-silence-git-probes.patch
 
 build:
-  number: 1
+  number: 2
   skip:
     - win
+  script:
+    env:
+      LUA_VERSION: ${{ lua_version }}
 
 requirements:
   build:
@@ -27,15 +31,15 @@ requirements:
   host:
     - ncurses
     - lua ==${{ lua_version }}
-  run_exports:
-    weak:
-      - ncurses
 
 tests:
   - script:
       - test -f $PREFIX/bin/nethack
+      - test -f $PREFIX/share/nethack/nethack
+      - test -f $PREFIX/share/nethack/recover
       - test -f $PREFIX/share/nethack/nhdat
       - test -f $PREFIX/share/nethack/sysconf
+      - test -f $PREFIX/share/nethack/license
       - nethack --version
 
 about:
