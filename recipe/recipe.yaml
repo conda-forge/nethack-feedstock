@@ -1,6 +1,7 @@
 context:
   version: "5.0.0"
   lua_version: "5.4.8"
+  pdcursesmod_version: "4.5.1"
 
 package:
   name: nethack
@@ -13,11 +14,15 @@ source:
       - patches/0001-compiler.500-respect-env-CFLAGS.patch
       - patches/0002-Makefile.src-link-against-conda-lua.patch
       - patches/0003-hints-silence-git-probes.patch
+      - patches/0004-Makefile.nmake-conda-forge-windows.patch
+  - if: win
+    then:
+      url: https://github.com/Bill-Gray/PDCursesMod/archive/refs/tags/v${{ pdcursesmod_version }}.zip
+      sha256: 24a277fc8f5a04bddb9a02d27b100f58dcc3077589db1256f7b9679a1ef5b616
+      target_directory: lib/pdcursesmod
 
 build:
-  number: 3
-  skip:
-    - win
+  number: 4
   script:
     env:
       LUA_VERSION: ${{ lua_version }}
@@ -26,21 +31,34 @@ requirements:
   build:
     - ${{ compiler('c') }}
     - ${{ stdlib('c') }}
-    - make
-    - groff
+    - if: not win
+      then:
+        - make
+        - groff
   host:
-    - ncurses
     - lua ==${{ lua_version }}
+    - if: not win
+      then:
+        - ncurses
 
 tests:
   - script:
-      - test -f $PREFIX/bin/nethack
-      - test -f $PREFIX/share/nethack/nethack
-      - test -f $PREFIX/share/nethack/recover
-      - test -f $PREFIX/share/nethack/nhdat
-      - test -f $PREFIX/share/nethack/sysconf
-      - test -f $PREFIX/share/nethack/license
-      - nethack --version
+      - if: not win
+        then:
+          - test -f $PREFIX/bin/nethack
+          - test -f $PREFIX/share/nethack/nethack
+          - test -f $PREFIX/share/nethack/recover
+          - test -f $PREFIX/share/nethack/nhdat
+          - test -f $PREFIX/share/nethack/sysconf
+          - test -f $PREFIX/share/nethack/license
+          - nethack --version
+      - if: win
+        then:
+          - if not exist %LIBRARY_BIN%\nethack.exe exit 1
+          - if not exist %LIBRARY_PREFIX%\share\nethack\nhdat exit 1
+          - if not exist %LIBRARY_PREFIX%\share\nethack\sysconf exit 1
+          - if not exist %LIBRARY_PREFIX%\share\nethack\license exit 1
+          - nethack.exe --version
 
 about:
   homepage: https://www.nethack.org/
